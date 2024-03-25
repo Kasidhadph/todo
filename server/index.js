@@ -1,40 +1,48 @@
-const list = document.querySelector('ul');
-const input = document.querySelector('input');
-const form = document.getElementById('taskForm'); 
-const BACKEND_URL = 'http://localhost:3001/task';
+const express = require('express');
+const cors = require('cors');
+const { Pool } = require('pg');
 
-function getTasks() {
-    fetch(BACKEND_URL)
-        .then(response => response.json())
-        .then(tasks => {
-            tasks.forEach(task => {renderTask(task);});
-        })
-        .catch(error => console.error('Error fetching tasks:', error));
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const port = 3001;
+const openDb = () => {
+    const pool = new Pool({
+        user: 'postgres',
+        host: 'localhost',
+        database: 'todo',
+        password: 'Arsenal.246',
+        port: 5432,
+    });
+    return pool;
 }
-function renderTask(task) {
-    const li = document.createElement('li');
-    li.setAttribute('class', 'list-group-item');
-    li.textContent = task.description; 
-    list.appendChild(li);
-}
-form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const description = input.value.trim();
-    if (description !== '') {
-    saveTask(description);
-}
+app.get('/', (req, res) => {
+    const pool = openDb();
+
+    pool.query('SELECT * FROM task', (error, result) => {
+        if (error) {
+            res.status(500).send({error: error.message});
+        }
+        res.status(200).send(result.rows);
+    });
 });
-function saveTask(description) {
-    fetch(BACKEND_URL, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json',},
-        body: JSON.stringify({ description }),
-    })
-    .then(response => response.json())
-    .then(task => {
-        renderTask(task);
-        input.value = ''; 
-    })
-    .catch(error => console.error('Error saving task:', error));
-}
-getTasks();
+
+app.post('/new', (req, res) => {
+    const pool = openDb();
+
+    pool.query("INSERT INTO task (description) VALUES ($1) returning *",
+     [req.body.description], (error, result) => {
+        if (error) {
+            console.error('Error executing query:', error);
+            res.status(500).json({error: error.message});
+        } else {
+            console.log('Query result:', result);
+            res.status(201).json({id : result.rows[0].id});
+        }
+    });
+});
+
+
+
+app.listen(port);
