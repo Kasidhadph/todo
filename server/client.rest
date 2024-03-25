@@ -1,0 +1,9 @@
+GET http://localhost:3001/tasks
+### 
+POST http://localhost:3001/tasks
+Content-Type: application/json
+
+{
+    "description": "Learn how to use REST Client"
+}
+
