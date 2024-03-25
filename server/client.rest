@@ -7,3 +7,5 @@ Content-Type: application/json
     "description": "Learn how to use REST Client"
 }
 
+### DELETE tasks
+DELETE  http://localhost:3001/delete/19 HTTP/1.1
